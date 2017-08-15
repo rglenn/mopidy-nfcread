@@ -27,7 +27,7 @@ class NFCread(pykka.ThreadingActor, core.CoreListener):
 
     def on_start(self):
         try:
-            self.tagReaderThreaded = Thread(target=self.tagReader.start)
+            self.tagReaderThreaded = Thread(target=self.tagReader.run)
             self.tagReader.daemon = True
             self.tagReaderThreaded.start()
             logger.info(__logprefix__ + ' started reader thread')

@@ -39,7 +39,7 @@ class ReadTag():
             raise exceptions.FrontendError("Error on nfc reader init:\n" +
                                            traceback.format_exc())
 
-    def start(self):
+    def run(self):
         try:
             self._running = True
             while self._running:
@@ -65,8 +65,8 @@ class ReadTag():
                 ndef_text = nfc.ndef.TextRecord(record).text
                 self.onread_callback(ndef_text)
             else:
-                logger.warning(__logprefix__ +
-                               'NDEF data not of type "urn:nfc:wkt:T" (text)')
+                logger.info(__logprefix__ +
+                            'NDEF data not of type "urn:nfc:wkt:T" (text)')
         else:
-            logger.warning(__logprefix__ + 'No NDEF data found')
+            logger.info(__logprefix__ + 'No NDEF data found')
         return True
