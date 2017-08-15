@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
-import threading
+from threading import Thread
+import traceback
 import logging
 import pykka
 
@@ -16,7 +17,7 @@ class NFCread(pykka.ThreadingActor, core.CoreListener):
         super(NFCread, self).__init__()
         self.core = core
         self.devicepath = str(config['nfcread']['devicepath'])
-        self.tagReader = None
+        self.tagReader = ReadTag(self.devicepath, self.ndef_read_callback)
         self.tagReaderThread = None
 
     def ndef_read_callback(self, data):
@@ -25,11 +26,13 @@ class NFCread(pykka.ThreadingActor, core.CoreListener):
         self.core.playback.play()
 
     def on_start(self):
-        self.tagReader = ReadTag(self.devicepath, self.ndef_read_callback)
-        self.tagReaderThreaded = threading.Thread(target=self.tagReader.start)
-        self.tagReader.daemon = True
-        self.tagReaderThreaded.start()
-        logger.info(__logprefix__ + 'started')
+        try:
+            self.tagReaderThreaded = Thread(target=self.tagReader.start)
+            self.tagReader.daemon = True
+            self.tagReaderThreaded.start()
+            logger.info(__logprefix__ + ' started reader thread')
+        except Exception:
+            traceback.print_exc()
 
     def on_stop(self):
         logger.warning(__logprefix__ + 'stopping extension')

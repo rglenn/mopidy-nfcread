@@ -5,6 +5,9 @@ import os
 import sys
 import time
 import inspect
+import traceback
+
+from mopidy import exceptions
 import nfc
 
 # realpath() will make your script run, even if you symlink it :)
@@ -27,20 +30,35 @@ __logprefix__ = 'NFCread: '
 class ReadTag():
     def __init__(self, devicepath, onread_callback):
         self.devicepath = devicepath
-        self.clf = None
         self.onread_callback = onread_callback
-        self._running = True
+        self._running = False
+
+        try:
+            self.clf = nfc.ContactlessFrontend(self.devicepath)
+        except Exception:
+            raise exceptions.FrontendError("Error on nfc reader init:\n" +
+                                           traceback.format_exc())
 
     def start(self):
-        while self.run_once() and self._running:
-            time.sleep(1)
-            logger.info(__logprefix__ + 'Waiting for NFC Tag')
+        try:
+            self._running = True
+            while self._running:
+                tag = self.clf.connect(rdwr={'on-connect': self.__on_connect},
+                                       terminate=self.status)
+        except Exception:
+            raise exceptions.FrontendError("Error in NFC connect():\n" +
+                                           traceback.format_exc())
+        finally:
+            self.clf.close()
+            logger.info(__logprefix__ + 'reader shut down')
 
     def stop(self):
         self._running = False
-        raise SystemExit
 
-    def __on_rdwr_connect(self, tag):
+    def status(self):
+        return not self._running
+
+    def __on_connect(self, tag):
         if tag.ndef:
             record = tag.ndef.message[0]
             if record.type == "urn:nfc:wkt:T":
@@ -52,16 +70,3 @@ class ReadTag():
         else:
             logger.warning(__logprefix__ + 'No NDEF data found')
         return True
-
-    def run_once(self):
-        if not self._running:
-            return false
-
-        try:
-            self.clf = nfc.ContactlessFrontend(self.devicepath)
-            return self.clf.connect(rdwr={
-                                          'on-connect': self.__on_rdwr_connect
-                                         })
-        finally:
-            self.clf.close()
-            logger.info(__logprefix__ + 'Reader shut down')
