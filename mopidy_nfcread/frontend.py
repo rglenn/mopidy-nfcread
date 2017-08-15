@@ -17,13 +17,20 @@ class NFCread(pykka.ThreadingActor, core.CoreListener):
         super(NFCread, self).__init__()
         self.core = core
         self.devicepath = str(config['nfcread']['devicepath'])
-        self.tagReader = ReadTag(self.devicepath, self.ndef_read_callback)
+        self.tagReader = ReadTag(self.devicepath,
+                                 self.ndef_read_callback,
+                                 self.release_callback)
         self.tagReaderThread = None
 
     def ndef_read_callback(self, data):
         self.core.tracklist.clear()
         self.core.tracklist.add(None, None, data, None)
         self.core.playback.play()
+
+    # TODO: the action should be configurable
+    def release_callback(self):
+        self.core.playback.stop()
+        self.core.tracklist.clear()
 
     def on_start(self):
         try:

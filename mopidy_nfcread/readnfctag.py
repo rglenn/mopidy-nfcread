@@ -28,9 +28,10 @@ __logprefix__ = 'NFCread: '
 
 
 class ReadTag():
-    def __init__(self, devicepath, onread_callback):
+    def __init__(self, devicepath, onread_callback, onrelease_callback):
         self.devicepath = devicepath
         self.onread_callback = onread_callback
+        self.onrelease_callback = onrelease_callback
         self._running = False
 
         try:
@@ -43,7 +44,10 @@ class ReadTag():
         try:
             self._running = True
             while self._running:
-                tag = self.clf.connect(rdwr={'on-connect': self.__on_connect},
+                tag = self.clf.connect(rdwr={
+                                             'on-connect': self.__on_connect,
+                                             'on-release': self.__on_release
+                                            },
                                        terminate=self.status)
         except Exception:
             raise exceptions.FrontendError("Error in NFC connect():\n" +
@@ -69,4 +73,10 @@ class ReadTag():
                             'NDEF data not of type "urn:nfc:wkt:T" (text)')
         else:
             logger.info(__logprefix__ + 'No NDEF data found')
+        # returning True lets connect() wait until the tag is no longer present
+        # so we have a debounced state
         return True
+
+    def __on_release(self, tag):
+        logger.info(__logprefix__ + 'tag released, executing callback')
+        self.onrelease_callback()
