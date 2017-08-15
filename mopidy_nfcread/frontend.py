@@ -37,10 +37,10 @@ class NFCread(pykka.ThreadingActor, core.CoreListener):
             self.tagReaderThreaded = Thread(target=self.tagReader.run)
             self.tagReader.daemon = True
             self.tagReaderThreaded.start()
-            logger.info(__logprefix__ + ' started reader thread')
+            logger.debug(__logprefix__ + ' started reader thread')
         except Exception:
             traceback.print_exc()
 
     def on_stop(self):
-        logger.warning(__logprefix__ + 'stopping extension')
+        logger.debug(__logprefix__ + 'stopping extension')
         self.tagReader.stop()

@@ -54,7 +54,7 @@ class ReadTag():
                                            traceback.format_exc())
         finally:
             self.clf.close()
-            logger.info(__logprefix__ + 'reader shut down')
+            logger.debug(__logprefix__ + 'reader shut down')
 
     def stop(self):
         self._running = False
