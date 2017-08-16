@@ -44,11 +44,21 @@ class ReadTag():
         try:
             self._running = True
             while self._running:
+                # poll for a tag. by default poll 5 times every 0.5 sec.
+                # the terminate function should avoid that, but there
+                # seems to be a catch after some time (or hardware issue?).
                 tag = self.clf.connect(rdwr={
                                              'on-connect': self.__on_connect,
                                              'on-release': self.__on_release
                                             },
                                        terminate=self.status)
+                # sleep for 0.5 seconds to avoid a direct reopen on serial
+                # interfaces (e.g. on RasPi) leading to device blocking
+                # timeouts...
+                # (0.5s is just the same as nfcpy does by default...)
+                # NOTE: absolute import necessary, hit exceptions
+                # about not known functions when shutting down mopidy.
+                time.sleep(0.5)
         except Exception:
             raise exceptions.FrontendError("Error in NFC connect():\n" +
                                            traceback.format_exc())
