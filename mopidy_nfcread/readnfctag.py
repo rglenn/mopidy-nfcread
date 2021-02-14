@@ -75,8 +75,8 @@ class ReadTag():
     def __on_connect(self, tag):
         if tag.ndef:
             record = tag.ndef.message[0]
-            if record.type == "urn:nfc:wkt:T":
-                ndef_text = nfc.ndef.TextRecord(record).text
+            if record.type == "urn:nfc:wkt:U":
+                ndef_text = nfc.ndef.UriRecord(record).uri
                 self.onread_callback(ndef_text)
             else:
                 logger.info(__logprefix__ +
