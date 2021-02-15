@@ -24,11 +24,14 @@ class NFCread(pykka.ThreadingActor, core.CoreListener):
 
     def ndef_read_callback(self, data):
         self.core.tracklist.clear()
-        self.core.tracklist.add(None, None, data, None)
+        logger.info(__logprefix__ + ' got uri = ' + data + ', starting playback')
+        self.core.tracklist.add(uris=[data])
+        logger.info(__logprefix__ + ' added to tracklist')
         self.core.playback.play()
 
     # TODO: the action should be configurable
     def release_callback(self):
+        logger.info(__logprefix__ + ' card released, stopping playback')
         self.core.playback.stop()
         self.core.tracklist.clear()
 
@@ -37,10 +40,10 @@ class NFCread(pykka.ThreadingActor, core.CoreListener):
             self.tagReaderThreaded = Thread(target=self.tagReader.run)
             self.tagReader.daemon = True
             self.tagReaderThreaded.start()
-            logger.debug(__logprefix__ + ' started reader thread')
+            logger.info(__logprefix__ + ' started reader thread')
         except Exception:
             traceback.print_exc()
 
     def on_stop(self):
-        logger.debug(__logprefix__ + 'stopping extension')
+        logger.info(__logprefix__ + 'stopping extension')
         self.tagReader.stop()
